@@ -1,0 +1,14 @@
+{
+    "C_Cpp.errorSquiggles": "disabled"
+    // "files.associations": {
+    //     "stdint.h": "c",
+    //     "stdbool.h": "c",
+    //     "stddef.h": "c"
+    // },
+    // "C_Cpp.default.compilerPath": "/home/ayumi/cross/bin/x86_64-elf-gcc-14.2.0",
+    // "C_Cpp.default.includePath": [
+    //     "${workspaceFolder}/**",
+    //     "/home/ayumi/cross/lib/gcc/x86_64-elf/14.2.0/include/**"
+    // ]
+    
+}
