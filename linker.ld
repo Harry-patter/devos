@@ -1,3 +1,5 @@
+OUTPUT_FORMAT("elf64-x86-64")
+OUTPUT_ARCH(i386:x86-64)
 /* The bootloader will look at this image and start execution at the symbol
    designated as the entry point. */
 ENTRY(_start)
@@ -17,10 +19,11 @@ SECTIONS
 	   memory which is verified to be available by the firmware, in order to
 	   work around this issue. This does not use that feature, so 2M was
 	   chosen as a safer option than the traditional 1M. */
-	. = 2M;
+	. = 1M;
 
-	.multiboot2 : {
-        *(.multiboot2)
+	.header : {
+		KEEP(*(.header))
+        *(.header)
     }
 
 	/* First put the multiboot header, as it is required to be put very early

@@ -1,16 +1,17 @@
 # 交叉编译器
 CC = x86_64-elf-gcc
+CPP = x86_64-elf-cpp
 AS = x86_64-elf-as
-LD = x86_64-elf-ld
+LD = x86_64-elf-gcc
 
 # 编译选项
-CFLAGS = -ffreestanding -O2 -Wall -Wextra -std=gnu17
-ASFLAGS = 
-LDFLAGS = -T linker.ld -nostdlib -lgcc
+CFLAGS = -ffreestanding -O2 -Wall -Wextra -std=gnu17  
+ASFLAGS = -f elf32 
+LDFLAGS = -T linker.ld -ffreestanding -nostdlib -lgcc
 
 # 源文件
-SOURCES = kernel.c boot.s
-OBJECTS = boot.o kernel.o
+SOURCES = boot.s kernel.c
+OBJECTS = boot.o kernel.o 
 OUTPUT = myos.bin
 
 # 默认目标
@@ -20,9 +21,13 @@ all: $(OUTPUT)
 $(OUTPUT): $(OBJECTS)
 	$(CC) $(LDFLAGS) -o $(OUTPUT) $(OBJECTS)
 
-# 编译 boot.s 为 boot.o
-boot.o: boot.s
-	$(AS) boot.s -o boot.o
+# 生成目标文件：boot_temp.s 从 boot.s
+boot_temp.s: boot.s
+	$(CPP) boot.s > boot_temp.s
+
+# 生成目标文件：boot.o 从 boot_temp.s
+boot.o: boot_temp.s
+	$(AS) boot_temp.s -o boot.o
 
 # 编译 kernel.c 为 kernel.o
 kernel.o: kernel.c
