@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
+// vscode中没有交叉编译的模式，ide显示存在__linux__
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
 #endif
