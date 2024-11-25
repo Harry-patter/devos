@@ -9,32 +9,40 @@ CFLAGS = -ffreestanding -O2 -Wall -Wextra -std=gnu17
 ASFLAGS = -f elf32 
 LDFLAGS = -T linker.ld -ffreestanding -nostdlib -lgcc
 
+# 源文件和目标文件夹
+SRC_DIR = src
+BUILD_DIR = build
+
 # 源文件
-SOURCES = boot.s kernel.c
-OBJECTS = boot.o kernel.o 
-OUTPUT = myos.bin
+SOURCES = $(wildcard $(SRC_DIR)/*.s $(SRC_DIR)/*.c)
+OBJECTS = $(patsubst $(SRC_DIR)/%.s, $(BUILD_DIR)/%.o, $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SOURCES)))
+OUTPUT = $(BUILD_DIR)/myos.bin
 
 # 默认目标
 all: $(OUTPUT)
 
 # 生成 myos.bin 文件
 $(OUTPUT): $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $(OUTPUT) $(OBJECTS)
+	$(LD) $(LDFLAGS) -o $(OUTPUT) $(OBJECTS)
 
 # 生成目标文件：boot_temp.s 从 boot.s
-boot_temp.s: boot.s
-	$(CPP) boot.s > boot_temp.s
+$(BUILD_DIR)/boot_temp.s: $(SRC_DIR)/boot.s | $(BUILD_DIR)
+	$(CPP) $(SRC_DIR)/boot.s > $(BUILD_DIR)/boot_temp.s
 
 # 生成目标文件：boot.o 从 boot_temp.s
-boot.o: boot_temp.s
-	$(AS) boot_temp.s -o boot.o
+$(BUILD_DIR)/boot.o: $(BUILD_DIR)/boot_temp.s
+	$(AS) $(BUILD_DIR)/boot_temp.s -o $(BUILD_DIR)/boot.o
 
 # 编译 kernel.c 为 kernel.o
-kernel.o: kernel.c
-	$(CC) $(CFLAGS) -c kernel.c -o kernel.o
+$(BUILD_DIR)/kernel.o: $(SRC_DIR)/kernel.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $(SRC_DIR)/kernel.c -o $(BUILD_DIR)/kernel.o
 
 # 清理中间文件
 clean:
-	rm -f $(OBJECTS) $(OUTPUT)
+	rm -rf $(BUILD_DIR)
+
+# 创建构建目录
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
 
 .PHONY: all clean
