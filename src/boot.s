@@ -81,7 +81,7 @@ multiboot_header_end:
 .section .text
 .code32
 .align 0x1000
-.extern kernel_main
+.extern cmain
 .globl _start
 
 _start:
@@ -183,9 +183,9 @@ long_mode_entry:
     push    %rdi  # Multiboot2 magic value
 
     # call the 64-bit kernel entry point
-    call    kernel_main
+    call    cmain
 
-    # halt if kernel_main returns
+    # halt if cmain returns
     hlt
     jmp     .
 
