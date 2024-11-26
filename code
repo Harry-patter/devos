@@ -16,7 +16,7 @@
  */
 
 #define ASM_FILE        1
-#include <multiboot2.h>
+#include "multiboot2.h"
 
 /*  C symbol format. HAVE_ASM_USCORE is defined by configure. */
 #ifdef HAVE_ASM_USCORE
@@ -27,69 +27,41 @@
 
 /*  The size of our stack (16KB). */
 #define STACK_SIZE                      0x4000
-
-/*  The flags for the Multiboot header. */
-#ifdef __ELF__
-# define AOUT_KLUDGE 0
-#else
-# define AOUT_KLUDGE MULTIBOOT_AOUT_KLUDGE
-#endif
         
-        .text
-
-        .globl  start, _start
-start:
-_start:
-        jmp     multiboot_entry
-
+        .section .header
+        
+multiboot_header:
         /*  Align 64 bits boundary. */
         .align  8
-        
-        /*  Multiboot header. */
-multiboot_header:
         /*  magic */
         .long   MULTIBOOT2_HEADER_MAGIC
         /*  ISA: i386 */
-        .long   GRUB_MULTIBOOT_ARCHITECTURE_I386
+        .long   MULTIBOOT_ARCHITECTURE_I386
         /*  Header length. */
         .long   multiboot_header_end - multiboot_header
         /*  checksum */
-        .long   -(MULTIBOOT2_HEADER_MAGIC + GRUB_MULTIBOOT_ARCHITECTURE_I386 + (multiboot_header_end - multiboot_header))
-#ifndef __ELF__
-address_tag_start:      
-        .short MULTIBOOT_HEADER_TAG_ADDRESS
-        .short MULTIBOOT_HEADER_TAG_OPTIONAL
-        .long address_tag_end - address_tag_start
-        /*  header_addr */
-        .long   multiboot_header
-        /*  load_addr */
-        .long   _start
-        /*  load_end_addr */
-        .long   _edata
-        /*  bss_end_addr */
-        .long   _end
-address_tag_end:
+        .long   -(MULTIBOOT2_HEADER_MAGIC + MULTIBOOT_ARCHITECTURE_I386 + (multiboot_header_end - multiboot_header))
 entry_address_tag_start:        
+        .align  8
         .short MULTIBOOT_HEADER_TAG_ENTRY_ADDRESS
         .short MULTIBOOT_HEADER_TAG_OPTIONAL
         .long entry_address_tag_end - entry_address_tag_start
         /*  entry_addr */
         .long multiboot_entry
 entry_address_tag_end:
-#endif /*  __ELF__ */
-framebuffer_tag_start:  
-        .short MULTIBOOT_HEADER_TAG_FRAMEBUFFER
-        .short MULTIBOOT_HEADER_TAG_OPTIONAL
-        .long framebuffer_tag_end - framebuffer_tag_start
-        .long 1024
-        .long 768
-        .long 32
-framebuffer_tag_end:
+end_tag_start:
+        .align  8
         .short MULTIBOOT_HEADER_TAG_END
         .short 0
-        .long 8
+        .long end_tag_end - end_tag_start
+end_tag_end:
 multiboot_header_end:
+
+        .text
+        .global _start
+_start:
 multiboot_entry:
+.code32
         /*  Initialize the stack pointer. */
         movl    $(stack + STACK_SIZE), %esp
 
@@ -102,8 +74,30 @@ multiboot_entry:
         /*  Push the magic value. */
         pushl   %eax
 
-        /*  Now enter the C main function... */
-        call    EXT_C(cmain)
+        /*  Set up page tables */
+        call    setup_page_tables
+
+        /*  Enable PAE */
+        movl    %cr4, %eax
+        orl     $0x20, %eax
+        movl    %eax, %cr4
+
+        /*  Set up EFER (Extended Feature Enable Register) */
+        movl    $0xC0000080, %ecx
+        rdmsr
+        orl     $0x00000100, %eax
+        wrmsr
+
+        /*  Enable paging */
+        movl    %cr0, %eax
+        orl     $0x80000000, %eax
+        movl    %eax, %cr0
+
+        /*  Load GDT */
+        lgdt    gdt64_ptr
+
+        /*  Far jump to enter 64-bit mode */
+        ljmp    $0x08, $long_mode_entry
 
         /*  Halt. */
         pushl   $halt_message
@@ -117,3 +111,73 @@ halt_message:
 
         /*  Our stack area. */
         .comm   stack, STACK_SIZE
+
+        /*  Page tables */
+        .align  0x1000
+boot_pml4:
+        .quad   0x1003
+        .fill   511, 8, 0
+boot_pdpt:
+        .quad   0x2003
+        .fill   511, 8, 0
+boot_pd:
+        .quad   0x3003
+        .quad   0x4003
+        .fill   509, 8, 0
+boot_pt:
+        .quad   0x00000003
+        .quad   0x200000
+        .fill   510, 8, 0
+
+setup_page_tables:
+        /*  Set up PML4 */
+        movl    $boot_pml4, %eax
+        orl     $0x03, %eax
+        movl    %eax, boot_pml4
+
+        /*  Set up PDPT */
+        movl    $boot_pdpt, %eax
+        orl     $0x03, %eax
+        movl    %eax, (boot_pml4 + 0x0)
+
+        /*  Set up PD */
+        movl    $boot_pd, %eax
+        orl     $0x03, %eax
+        movl    %eax, (boot_pdpt + 0x0)
+
+        /*  Set up PT */
+        movl    $boot_pt, %eax
+        orl     $0x03, %eax
+        movl    %eax, (boot_pd + 0x0)
+
+        /*  Map the first 2MB of memory */
+        movl    $0x00000003, %eax
+        movl    %eax, (boot_pt + 0x0)
+
+        /*  Load CR3 with the address of PML4 */
+        movl    $boot_pml4, %eax
+        movl    %eax, %cr3
+
+        ret
+
+        /*  GDT for 64-bit mode */
+        .align  0x1000
+gdt64:
+        .quad   0x0000000000000000  /*  NULL descriptor */
+        .quad   0x00209A0000000000  /*  Code segment */
+        .quad   0x0000920000000000  /*  Data segment */
+gdt64_ptr:
+        .short  gdt64_ptr - gdt64 - 1
+        .long   gdt64
+
+        .code64
+long_mode_entry:
+        /*  Set up 64-bit stack */
+        movq    $stack + STACK_SIZE, %rsp
+
+        /*  Call the 64-bit kernel entry point */
+        call    EXT_C(cmain)
+
+        /*  Halt if cmain returns */
+        hlt
+        jmp     .
