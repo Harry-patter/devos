@@ -46,7 +46,8 @@ void printf (const char *format, ...);
 
 /*  Check if MAGIC is valid and print the Multiboot information structure
    pointed by ADDR. */
-void cmain (unsigned long magic, unsigned long addr)
+void
+cmain (unsigned long magic, unsigned long addr)
 {  
   struct multiboot_tag *tag;
   unsigned size;
@@ -217,6 +218,7 @@ void cmain (unsigned long magic, unsigned long addr)
   tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag 
                                   + ((tag->size + 7) & ~7));
   printf ("Total mbi size 0x%x\n", (unsigned) tag - addr);
+  printf ("Hello World\n");
 }    
 
 /*  Clear the screen and initialize VIDEO, XPOS and YPOS. */
