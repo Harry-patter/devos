@@ -17,6 +17,8 @@
 
 #define ASM_FILE        1
 #include "multiboot2.h"
+#include "page_types.h"
+#include "cpu_types.h"
 
 /*  C symbol format. HAVE_ASM_USCORE is defined by configure. */
 #ifdef HAVE_ASM_USCORE
@@ -46,7 +48,6 @@ entry_address_tag_start:
     .short MULTIBOOT_HEADER_TAG_ENTRY_ADDRESS
     .short MULTIBOOT_HEADER_TAG_OPTIONAL
     .long entry_address_tag_end - entry_address_tag_start
-    /*  entry_addr */
     .long multiboot_entry
 entry_address_tag_end:
 end_tag_start:
@@ -63,7 +64,7 @@ multiboot_header_end:
 _start:
 multiboot_entry:
 
-    /*  Initialize the stack pointer. */
+    /*  Initialize the stack pointergdt64_ptrd. */
     movl    $(stack + STACK_SIZE), %esp
 
     /*  Reset EFLAGS. */
@@ -75,22 +76,39 @@ multiboot_entry:
     /*  Push the magic value. */
     pushl   %eax
 
-    /*  Enable PAE */
-    movl    %cr4, %eax
-    orl     $0x20, %eax
-    movl    %eax, %cr4
+    # set up page table for booting stage
+    # it's okay to write only 32bit here :)
+    mov     $boot_pud, %eax
+    or      $(PDE_ATTR_P | PDE_ATTR_RW), %eax
+    mov     %eax, boot_pgd
 
-    /*  Set up EFER (Extended Feature Enable Register) */
-    movl    $0xC0000080, %ecx
+    xor     %eax, %eax
+    or      $(PDE_ATTR_P | PDE_ATTR_RW | PDE_ATTR_PS), %eax
+    movl    %eax, boot_pud
+
+    xor     %eax, %eax
+    mov     %eax, (boot_pgd + 4)
+    mov     %eax, (boot_pud + 4)
+
+    # load page table
+    mov     $boot_pgd, %eax
+    mov     %eax, %cr3
+
+    # enable PAE and PGE
+    mov     %cr4, %eax
+    or      $(CR4_PAE | CR4_PGE), %eax
+    mov     %eax, %cr4
+
+    # enter long mode by enabling EFER.LME
+    mov     $0xC0000080, %ecx
     rdmsr
-    orl     $0x00000100, %eax
+    or      $(1 << 8), %eax
     wrmsr
 
-    call setup_page_tables
-    /*  Enable paging */
-    movl    %cr0, %eax
-    orl     $0x80000000, %eax
-    movl    %eax, %cr0
+    # enable paging
+    mov     %cr0, %eax
+    or      $CR0_PG, %eax
+    mov     %eax, %cr0
 
     /*  Load GDT */
     lgdt    gdt64_ptr
@@ -110,28 +128,33 @@ loop:   hlt
 
 setup_page_tables:
     /*  Set up PML4 */
-    movl    $boot_pml4, %eax
-    orl     $0x03, %eax
-    movl    %eax, boot_pml4
-
-    /*  Set up PDPT */
     movl    $boot_pdpt, %eax
-    orl     $0x03, %eax
+    orl     $0x03, %eax        /* Set present and writable */
     movl    %eax, (boot_pml4 + 0x0)
 
-    /*  Set up PD */
+    /*  Set up PDPT */
     movl    $boot_pd, %eax
-    orl     $0x03, %eax
+    orl     $0x03, %eax        /* Set present and writable */
     movl    %eax, (boot_pdpt + 0x0)
 
-    /*  Set up PT */
+    /*  Set up PD */
     movl    $boot_pt, %eax
-    orl     $0x03, %eax
+    orl     $0x03, %eax        /* Set present and writable */
     movl    %eax, (boot_pd + 0x0)
 
-    /*  Map the first 2MB of memory */
-    movl    $0x00000003, %eax
-    movl    %eax, (boot_pt + 0x0)
+    /*  Map the first 128MB of memory using 2MB pages */
+    movl    $boot_pt, %eax
+    movl    %eax, %ebx         /* Load base address of page table */
+    
+    movl    $0x200000, %eax    /* Page size 2MB */
+    movl    $32, %ecx          /* Number of entries for 128MB (128MB / 2MB) = 64 entries */
+    
+map_pages:
+    movl    $0x00000000, %eax    /* Start at physical address 0 */
+    movl    %eax, (%ebx)         /* Set the page table entry to 2MB page */
+    addl    $0x200000, %eax      /* Move to next 2MB page */
+    addl    $8, %ebx             /* Move to the next page table entry */
+    loop    map_pages
 
     /*  Load CR3 with the address of PML4 */
     movl    $boot_pml4, %eax
@@ -146,25 +169,26 @@ halt_message:
     /*  Our stack area. */
     .comm   stack, STACK_SIZE
 
+/* Temp tables*/
+    .align  0x1000
+boot_pgd:
+    .space 0x1000
+boot_pud:
+    .space 0x1000
+
 /*  Page tables */
     .align  0x1000
 boot_pml4:
-    .quad   0x1003
-    .fill   511, 8, 0
+    .fill   512, 8, 0
 boot_pdpt:
-    .quad   0x2003
-    .fill   511, 8, 0
+    .fill   512, 8, 0
 boot_pd:
-    .quad   0x3003
-    .quad   0x4003
-    .fill   509, 8, 0
+    .fill   512, 8, 0
 boot_pt:
-    .quad   0x00000003
-    .quad   0x200000
-    .fill   510, 8, 0
+    .fill   512, 8, 0
 
     
-    /*  GDT for 64-bit mode */
+/*  GDT for 64-bit mode */
     .align  0x1000
 gdt64:
     .quad   0x0000000000000000  /*  NULL descriptor */
