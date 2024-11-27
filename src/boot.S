@@ -62,9 +62,7 @@ multiboot_header_end:
     .code32
     .global _start
 _start:
-multiboot_entry:
-
-    /*  Initialize the stack pointergdt64_ptrd. */
+multiboot_entry:    
     movl    $(stack + STACK_SIZE), %esp
 
     /*  Reset EFLAGS. */
@@ -123,44 +121,22 @@ multiboot_entry:
     pushl   $halt_message
     call    EXT_C(printf)
     
-loop:   hlt
+loop:   
+    hlt
     jmp     loop
 
-setup_page_tables:
-    /*  Set up PML4 */
-    movl    $boot_pdpt, %eax
-    orl     $0x03, %eax        /* Set present and writable */
-    movl    %eax, (boot_pml4 + 0x0)
+    .code64
 
-    /*  Set up PDPT */
-    movl    $boot_pd, %eax
-    orl     $0x03, %eax        /* Set present and writable */
-    movl    %eax, (boot_pdpt + 0x0)
+long_mode_entry:
+    /*  Set up 64-bit stack */
+    #movq    $(stack + STACK_SIZE), %rsp
 
-    /*  Set up PD */
-    movl    $boot_pt, %eax
-    orl     $0x03, %eax        /* Set present and writable */
-    movl    %eax, (boot_pd + 0x0)
+    /*  Call the 64-bit kernel entry point */
+    call    EXT_C(cmain)
 
-    /*  Map the first 128MB of memory using 2MB pages */
-    movl    $boot_pt, %eax
-    movl    %eax, %ebx         /* Load base address of page table */
-    
-    movl    $0x200000, %eax    /* Page size 2MB */
-    movl    $32, %ecx          /* Number of entries for 128MB (128MB / 2MB) = 64 entries */
-    
-map_pages:
-    movl    $0x00000000, %eax    /* Start at physical address 0 */
-    movl    %eax, (%ebx)         /* Set the page table entry to 2MB page */
-    addl    $0x200000, %eax      /* Move to next 2MB page */
-    addl    $8, %ebx             /* Move to the next page table entry */
-    loop    map_pages
-
-    /*  Load CR3 with the address of PML4 */
-    movl    $boot_pml4, %eax
-    movl    %eax, %cr3
-
-    ret
+    /*  Halt if cmain returns */
+    hlt
+    jmp     .
 
     .section .data
 halt_message:
@@ -197,17 +173,4 @@ gdt64:
 gdt64_ptr:
     .short  gdt64_ptr - gdt64 - 1
     .long   gdt64
-
-    .section .text
-    .code64
-
-long_mode_entry:
-    /*  Set up 64-bit stack */
-    #movq    $(stack + STACK_SIZE), %rsp
-
-    /*  Call the 64-bit kernel entry point */
-    call    EXT_C(cmain)
-
-    /*  Halt if cmain returns */
-    hlt
-    jmp     .
+    
