@@ -70,9 +70,9 @@ multiboot_entry:
     popf
 
     /*  Push the pointer to the Multiboot information structure. */
-    pushl   %ebx
+    mov     %eax, %edi
     /*  Push the magic value. */
-    pushl   %eax
+    mov     %ebx, %esi
 
     # set up page table for booting stage
     # it's okay to write only 32bit here :)
@@ -114,8 +114,6 @@ multiboot_entry:
     /*  Far jump to enter 64-bit mode */
     jmp $(1 << SELECTOR_INDEX), $long_mode_entry
 
-
-    #.code64
 long_mode_entry:
     /*  Now enter the C main function... */
     call    EXT_C(cmain)

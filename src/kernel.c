@@ -16,7 +16,7 @@
  */
 
 #include "multiboot2.h"
-
+#include <stdint>
 /*  Macros. */
 
 /*  Some screen stuff. */
