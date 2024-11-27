@@ -112,31 +112,22 @@ multiboot_entry:
     lgdt    gdt64_ptr
 
     /*  Far jump to enter 64-bit mode */
-    ljmp    $0x08, $long_mode_entry
+    jmp $(1 << SELECTOR_INDEX), $long_mode_entry
 
+
+    #.code64
+long_mode_entry:
     /*  Now enter the C main function... */
     call    EXT_C(cmain)
 
     /*  Halt. */
-    pushl   $halt_message
+    push   $halt_message
     call    EXT_C(printf)
-    
+
+    /*  Halt if cmain returns */
 loop:   
     hlt
     jmp     loop
-
-    .code64
-
-long_mode_entry:
-    /*  Set up 64-bit stack */
-    #movq    $(stack + STACK_SIZE), %rsp
-
-    /*  Call the 64-bit kernel entry point */
-    call    EXT_C(cmain)
-
-    /*  Halt if cmain returns */
-    hlt
-    jmp     .
 
     .section .data
 halt_message:
@@ -151,19 +142,7 @@ boot_pgd:
     .space 0x1000
 boot_pud:
     .space 0x1000
-
-/*  Page tables */
-    .align  0x1000
-boot_pml4:
-    .fill   512, 8, 0
-boot_pdpt:
-    .fill   512, 8, 0
-boot_pd:
-    .fill   512, 8, 0
-boot_pt:
-    .fill   512, 8, 0
-
-    
+ 
 /*  GDT for 64-bit mode */
     .align  0x1000
 gdt64:
