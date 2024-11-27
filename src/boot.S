@@ -75,42 +75,35 @@ multiboot_entry:
     /*  Push the magic value. */
     pushl   %eax
 
+    /*  Enable PAE */
+    movl    %cr4, %eax
+    orl     $0x20, %eax
+    movl    %eax, %cr4
+
+    /*  Set up EFER (Extended Feature Enable Register) */
+    movl    $0xC0000080, %ecx
+    rdmsr
+    orl     $0x00000100, %eax
+    wrmsr
+
+    call setup_page_tables
+    /*  Enable paging */
+    movl    %cr0, %eax
+    orl     $0x80000000, %eax
+    movl    %eax, %cr0
+
+    /*  Load GDT */
+    lgdt    gdt64_ptr
+
+    /*  Far jump to enter 64-bit mode */
+    ljmp    $0x08, $long_mode_entry
+
+    /*  Now enter the C main function... */
     call    EXT_C(cmain)
 
     /*  Halt. */
-    # pushl   $halt_message
-    # call    EXT_C(printf)
-    /*  Set up page tables */
-    # call    setup_page_tables
-
-    /*  Enable PAE */
-    # movl    %cr4, %eax
-    # orl     $0x20, %eax
-    # movl    %eax, %cr4
-
-    /*  Set up EFER (Extended Feature Enable Register) */
-    # movl    $0xC0000080, %ecx
-    # rdmsr
-    # orl     $0x00000100, %eax
-    # wrmsr
-
-    /*  Enable paging */
-    # movl    %cr0, %eax
-    # orl     $0x80000000, %eax
-    # movl    %eax, %cr0
-
-    /*  Load GDT */
-    # lgdt    gdt64_ptr
-
-    /*  Far jump to enter 64-bit mode */
-    # ljmp    $0x08, $long_mode_entry
-
-    /*  Now enter the C main function... */
-    # call    EXT_C(cmain)
-
-    /*  Halt. */
-    # pushl   $halt_message
-    # call    EXT_C(printf)
+    pushl   $halt_message
+    call    EXT_C(printf)
     
 loop:   hlt
     jmp     loop
@@ -171,8 +164,6 @@ boot_pt:
     .fill   510, 8, 0
 
     
-
-
     /*  GDT for 64-bit mode */
     .align  0x1000
 gdt64:
@@ -185,6 +176,7 @@ gdt64_ptr:
 
     .section .text
     .code64
+
 long_mode_entry:
     /*  Set up 64-bit stack */
     #movq    $(stack + STACK_SIZE), %rsp

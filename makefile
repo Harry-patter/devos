@@ -9,7 +9,7 @@ LD = x86_64-elf-ld
 
 # 编译选项
 # CFLAGS = -ffreestanding -O2 -Wall -Wextra -std=gnu17 -nostartfiles
-CFLAGS = -m32 -fno-builtin -fno-stack-protector -nostartfiles
+CFLAGS = -m32 -g -fno-builtin -fno-stack-protector -nostartfiles
 # ASFLAGS = -f elf64 # 使用as时
 LDFLAGS = -m elf_i386 -T linker.ld -nostdlib
 # LDFLAGS = -Ttext 0x100000 -melf_i386 -nostdlib # 不使用自定义的脚本时
