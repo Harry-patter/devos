@@ -53,7 +53,7 @@ build_gcc() {
 build_gdb() {
     echo "=== Building gdb ==="
     cd $cross_dir/build/gdb
-    $cross_dir/src/gdb-15.2/configure --target=$TARGET --prefix=$PREFIX --disable-werror
+    $cross_dir/src/gdb-15.2/configure --target=$TARGET --prefix=$PREFIX --disable-werror --with-expat
     make all-gdb -j$(nproc) || exit
     make install-gdb || exit
     echo "=== gdb built successfully ==="

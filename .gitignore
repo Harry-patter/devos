@@ -20001,3 +20001,10 @@ build/kernel.o
 build/myos.bin
 isofile/bin/myos.bin
 isofile/iso/myos.iso
+build/kernel.bin
+isofile/kernel.iso
+isofile/myos.iso
+isodir/boot/kernel.bin
+isodir/boot/myos.bin
+test/test.iso
+test/isodir/boot/grub/grub.cfg

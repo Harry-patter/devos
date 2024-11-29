@@ -12,7 +12,7 @@ LD = x86_64-elf-ld
 # CFLAGS = -m32 -g -fno-builtin -fno-stack-protector -nostartfiles
 CFLAGS = -g -fno-builtin -fno-stack-protector -nostartfiles
 # ASFLAGS = -f elf64 # 使用as时
-# LDFLAGS = -m elf_i386 -T linker.ld -nostdlib
+# LDFLAGS = -melf_i386 -T linker.ld -nostdlib
 LDFLAGS = -T linker.ld -nostdlib
 # LDFLAGS = -Ttext 0x100000 -melf_i386 -nostdlib # 不使用自定义的脚本时
 
@@ -23,12 +23,12 @@ BUILD_DIR = build
 # 源文件
 SOURCES = $(wildcard $(SRC_DIR)/*.S $(SRC_DIR)/*.c)
 OBJECTS = $(patsubst $(SRC_DIR)/%.S, $(BUILD_DIR)/%.o, $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SOURCES)))
-OUTPUT = $(BUILD_DIR)/myos.bin
+OUTPUT = $(BUILD_DIR)/kernel.bin
 
 # 默认目标
 all: $(OUTPUT)
 
-# 生成 myos.bin 文件
+# 生成 kernel.bin 文件
 $(OUTPUT): $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $(OUTPUT) $(OBJECTS)
 

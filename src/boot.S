@@ -30,11 +30,15 @@
 /*  The size of our stack (16KB). */
 #define STACK_SIZE                      0x4000
         
-    .section .header
+    .section .text
+    .code32
+    .global _start
+_start:
+    jmp multiboot_entry
     
-multiboot_header:
     /*  Align 64 bits boundary. */
     .align  8
+multiboot_header:
     /*  magic */
     .long   MULTIBOOT2_HEADER_MAGIC
     /*  ISA: i386 */
@@ -43,35 +47,57 @@ multiboot_header:
     .long   multiboot_header_end - multiboot_header
     /*  checksum */
     .long   -(MULTIBOOT2_HEADER_MAGIC + MULTIBOOT_ARCHITECTURE_I386 + (multiboot_header_end - multiboot_header))
-entry_address_tag_start:        
+#ifndef __ELF__
+address_tag_start:    
     .align  8
+    .short MULTIBOOT_HEADER_TAG_ADDRESS
+    .short MULTIBOOT_HEADER_TAG_OPTIONAL
+    .long address_tag_end - address_tag_start
+    /*  header_addr */
+    .long   multiboot_header
+    /*  load_addr */
+    .long   _start
+    /*  load_end_addr */
+    .long   _edata
+    /*  bss_end_addr */
+    .long   _end
+address_tag_end:
+entry_address_tag_start:   
+    .align  8     
     .short MULTIBOOT_HEADER_TAG_ENTRY_ADDRESS
     .short MULTIBOOT_HEADER_TAG_OPTIONAL
     .long entry_address_tag_end - entry_address_tag_start
-    .long multiboot_entry
+    /*  entry_addr */
+    .long _start
 entry_address_tag_end:
-end_tag_start:
+#endif /*  __ELF__ */
+framebuffer_tag_start:  
+    .align  8 
+    .short MULTIBOOT_HEADER_TAG_FRAMEBUFFER
+    .short MULTIBOOT_HEADER_TAG_OPTIONAL
+    .long framebuffer_tag_end - framebuffer_tag_start
+    .long 1024
+    .long 768
+    .long 32
+framebuffer_tag_end:
+end_tag:
     .align  8
     .short MULTIBOOT_HEADER_TAG_END
     .short 0
-    .long end_tag_end - end_tag_start
-end_tag_end:
+    .long 8
 multiboot_header_end:
 
-    .section .text
-    .code32
-    .global _start
-_start:
+    
 multiboot_entry:    
     movl    $(stack + STACK_SIZE), %esp
 
     /*  Reset EFLAGS. */
     pushl   $0
     popf
-
-    /*  Push the pointer to the Multiboot information structure. */
+    
+    /*  First Parm: Magic value. */
     mov     %eax, %edi
-    /*  Push the magic value. */
+    /*  Second Parm: Pointer to the Multiboot information structure. */
     mov     %ebx, %esi
 
     # set up page table for booting stage
@@ -131,10 +157,10 @@ loop:
 halt_message:
     .asciz  "Halted."
 
-    /*  Our stack area. */
+/*  Our stack area. */
     .comm   stack, STACK_SIZE
 
-/* Temp tables*/
+/*  Temp tables */
     .align  0x1000
 boot_pgd:
     .space 0x1000

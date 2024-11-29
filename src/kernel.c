@@ -16,7 +16,6 @@
  */
 
 #include "multiboot2.h"
-#include <stdint>
 /*  Macros. */
 
 /*  Some screen stuff. */
@@ -48,7 +47,7 @@ void printf (const char *format, ...);
    pointed by ADDR. */
 void
 cmain (unsigned long magic, unsigned long addr)
-{  
+{
   struct multiboot_tag *tag;
   unsigned size;
 
@@ -72,7 +71,7 @@ cmain (unsigned long magic, unsigned long addr)
   printf ("Announced mbi size 0x%x\n", size);
   for (tag = (struct multiboot_tag *) (addr + 8);
        tag->type != MULTIBOOT_TAG_TYPE_END;
-       tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag 
+       tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag
                                        + ((tag->size + 7) & ~7)))
     {
       printf ("Tag 0x%x, Size 0x%x\n", tag->type, tag->size);
@@ -108,11 +107,11 @@ cmain (unsigned long magic, unsigned long addr)
             multiboot_memory_map_t *mmap;
 
             printf ("mmap\n");
-      
+
             for (mmap = ((struct multiboot_tag_mmap *) tag)->entries;
-                 (multiboot_uint8_t *) mmap 
+                 (multiboot_uint8_t *) mmap
                    < (multiboot_uint8_t *) tag + tag->size;
-                 mmap = (multiboot_memory_map_t *) 
+                 mmap = (multiboot_memory_map_t *)
                    ((unsigned long) mmap
                     + ((struct multiboot_tag_mmap *) tag)->entry_size))
               printf (" base_addr = 0x%x%x,"
@@ -138,15 +137,15 @@ cmain (unsigned long magic, unsigned long addr)
                 {
                   unsigned best_distance, distance;
                   struct multiboot_color *palette;
-            
+
                   palette = tagfb->framebuffer_palette;
 
                   color = 0;
                   best_distance = 4*256*256;
-            
+
                   for (i = 0; i < tagfb->framebuffer_palette_num_colors; i++)
                     {
-                      distance = (0xff - palette[i].blue) 
+                      distance = (0xff - palette[i].blue)
                         * (0xff - palette[i].blue)
                         + palette[i].red * palette[i].red
                         + palette[i].green * palette[i].green;
@@ -160,7 +159,7 @@ cmain (unsigned long magic, unsigned long addr)
                 break;
 
               case MULTIBOOT_FRAMEBUFFER_TYPE_RGB:
-                color = ((1 << tagfb->framebuffer_blue_mask_size) - 1) 
+                color = ((1 << tagfb->framebuffer_blue_mask_size) - 1)
                   << tagfb->framebuffer_blue_field_position;
                 break;
 
@@ -172,7 +171,7 @@ cmain (unsigned long magic, unsigned long addr)
                 color = 0xffffffff;
                 break;
               }
-            
+
             for (i = 0; i < tagfb->common.framebuffer_width
                    && i < tagfb->common.framebuffer_height; i++)
               {
@@ -215,11 +214,11 @@ cmain (unsigned long magic, unsigned long addr)
 
         }
     }
-  tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag 
+  tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag
                                   + ((tag->size + 7) & ~7));
   printf ("Total mbi size 0x%x\n", (unsigned) tag - addr);
   printf ("Hello World\n");
-}    
+}
 
 /*  Clear the screen and initialize VIDEO, XPOS and YPOS. */
 static void
@@ -228,7 +227,7 @@ cls (void)
   int i;
 
   video = (unsigned char *) VIDEO;
-  
+
   for (i = 0; i < COLUMNS * LINES * 2; i++)
     *(video + i) = 0;
 
@@ -246,7 +245,7 @@ itoa (char *buf, int base, int d)
   char *p1, *p2;
   unsigned long ud = d;
   int divisor = 10;
-  
+
   /*  If %d is specified and D is minus, put ‘-’ in the head. */
   if (base == 'd' && d < 0)
     {
@@ -261,14 +260,14 @@ itoa (char *buf, int base, int d)
   do
     {
       int remainder = ud % divisor;
-      
+
       *p++ = (remainder < 10) ? remainder + '0' : remainder + 'a' - 10;
     }
   while (ud /= divisor);
 
   /*  Terminate BUF. */
   *p = 0;
-  
+
   /*  Reverse BUF. */
   p1 = buf;
   p2 = p - 1;
@@ -314,7 +313,7 @@ printf (const char *format, ...)
   char buf[20];
 
   arg++;
-  
+
   while ((c = *format++) != 0)
     {
       if (c != '%')
@@ -323,7 +322,7 @@ printf (const char *format, ...)
         {
           char *p, *p2;
           int pad0 = 0, pad = 0;
-          
+
           c = *format++;
           if (c == '0')
             {
