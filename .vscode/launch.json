@@ -13,7 +13,7 @@
             "stopAtEntry": false,//会自动停在main,不需要则设置为false
             "cwd": "${workspaceRoot}",
             "environment": [],
-            "externalConsole": true,
+            "externalConsole": false,
             "MIMode": "gdb", //运行模式
             "logging": {
                 "moduleLoad": false,
@@ -37,9 +37,8 @@
                     "ignoreFailures": true
                 }
             ],
-            "miDebuggerPath":"gdb",//工具链gdb
-            "miDebuggerServerAddress":"localhost:1234"//远程端口
-
+            "miDebuggerPath":"x86_64-elf-gdb",//工具链gdb
+            
         }
     ]
 }

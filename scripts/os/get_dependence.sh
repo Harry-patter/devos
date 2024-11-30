@@ -16,6 +16,7 @@ DEPENDENCIES=(
   bridge-utils
   xorriso
   ovmf
+  cmake
 )
 
 # 更新包列表

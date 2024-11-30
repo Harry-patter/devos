@@ -5,7 +5,7 @@ isofile="$script_dir/../../isofile/kernel.iso"
 
 if [[ $1 == "efi" ]]; then
 	qemu-system-x86_64 \
-		-bios /usr/share/ovmf/OVMF.fd \
+		-bios /usr/share/ovmf/0xB8000.fd \
 		-cpu kvm64,+smep,+smap \
 		-smp sockets=1,dies=1,cores=1,threads=1 \
 		-m 4G \

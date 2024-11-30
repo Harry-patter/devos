@@ -1,7 +1,10 @@
 {
-    "C_Cpp.errorSquiggles": "disabled",
+    "C_Cpp.errorSquiggles": "enabled",
     "files.associations": {
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "multiboot2.h": "c",
+        "cpu_types.h": "c",
+        "page_types.h": "c"
     }
     // "files.associations": {
     //     "stdint.h": "c",

@@ -11,6 +11,7 @@ urls=(
     "https://ftp.gnu.org/gnu/binutils/binutils-2.43.1.tar.gz"
     "https://ftp.gnu.org/gnu/gcc/gcc-14.2.0/gcc-14.2.0.tar.gz"
     "https://ftp.gnu.org/gnu/gdb/gdb-15.2.tar.gz"
+    "https://github.com/libexpat/libexpat/releases/download/R_2_6_4/expat-2.6.4.tar.gz"
 )
 
 all_tarfiles=()

@@ -39,6 +39,15 @@ build_binutils() {
     echo "=== Binutils built successfully ==="
 }
 
+build_expat(){
+    echo "=== Building expat ==="
+    cd $cross_dir/build/expat
+    $cross_dir/srcBINUTILS_PID=$!/expat-2.6.4/configure --prefix=$PREFIX/expat
+    make -j$(nproc) || exit
+    make install || exit
+    echo "=== expat built successfully ==="
+}
+
 build_gcc() {
     echo "=== Building gcc ==="
     cd $cross_dir/build/gcc
@@ -53,7 +62,7 @@ build_gcc() {
 build_gdb() {
     echo "=== Building gdb ==="
     cd $cross_dir/build/gdb
-    $cross_dir/src/gdb-15.2/configure --target=$TARGET --prefix=$PREFIX --disable-werror --with-expat
+    $cross_dir/src/gdb-15.2/configure --target=$TARGET --prefix=$PREFIX --disable-werror --with-expat --with-libexpat-prefix=$HOME/cross/expat/
     make all-gdb -j$(nproc) || exit
     make install-gdb || exit
     echo "=== gdb built successfully ==="
@@ -65,6 +74,12 @@ BINUTILS_PID=$!
 
 # 等待 Binutils 完成后启动 GCC 和 GDB
 wait $BINUTILS_PID
+
+# 构建expat
+build_expat &
+EXPAT_PID=$!
+
+wait $EXPAT_PID
 
 # 并行构建 GCC 和 GDB
 build_gcc &

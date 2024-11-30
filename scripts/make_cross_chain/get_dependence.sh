@@ -29,3 +29,4 @@ echo "Installing dependencies..."
 apt install -y "${DEPENDENCIES[@]}" || { echo "Failed to install dependencies"; exit 1; }
 
 echo "All dependencies installed successfully!"
+
