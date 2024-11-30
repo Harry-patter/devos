@@ -18,8 +18,8 @@
 #define ASM_FILE        1
 
 #include "boot/multiboot2.h"
-#include "boot/page_types.h"
-#include "boot/cpu_types.h"
+#include "boot/asm/page_types.h"
+#include "boot/asm/cpu_types.h"
 
 /*  C symbol format. HAVE_ASM_USCORE is defined by configure. */
 #ifdef HAVE_ASM_USCORE

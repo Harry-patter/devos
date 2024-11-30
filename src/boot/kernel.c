@@ -16,8 +16,8 @@
  */
 
 #include "boot/multiboot2.h"
-#include "boot/cpu_types.h"
-#include "boot/page_types.h"
+#include "boot/asm/cpu_types.h"
+#include "boot/asm/page_types.h"
 /*  Macros. */
 
 /*  Some screen stuff. */

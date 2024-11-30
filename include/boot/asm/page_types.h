@@ -17,7 +17,6 @@
 #define PTE_ATTR_A     (1 << 5)
 #define PTE_ATTR_D     (1 << 6)
 
-
 /* Page Directory Entry attributes*/
 
 #define PDE_ATTR_P     (1 << 0)
@@ -45,20 +44,20 @@
 
 /* for C code */
 
-// #ifndef ASM_FILE
+#ifndef ASM_FILE
 
-// #include <closureos/types.h>
+#include <closureos/types.h>
 
-// /* basic types for page table */
+/* basic types for page table */
 
-// typedef uint64_t pgd_t;
-// typedef uint64_t pud_t;
-// typedef uint64_t pmd_t;
-// typedef uint64_t pte_t;
-// typedef uint64_t page_attr_t;
+typedef uint64_t pgd_t;
+typedef uint64_t pud_t;
+typedef uint64_t pmd_t;
+typedef uint64_t pte_t;
+typedef uint64_t page_attr_t;
 
-// #define PAGE_ALIGN(addr)    ((((size_t) addr) + (PAGE_SIZE - 1)) & PAGE_MASK)
+#define PAGE_ALIGN(addr)    ((((size_t) addr) + (PAGE_SIZE - 1)) & PAGE_MASK)
 
-// #endif
+#endif
 
 #endif // X86_ASM_PAGE_TYPES_H
