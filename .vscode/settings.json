@@ -4,7 +4,10 @@
         "stdint.h": "c",
         "multiboot2.h": "c",
         "cpu_types.h": "c",
-        "page_types.h": "c"
+        "page_types.h": "c",
+        "iostream": "cpp",
+        "com.h": "c",
+        "io.h": "c"
     }
     // "files.associations": {
     //     "stdint.h": "c",

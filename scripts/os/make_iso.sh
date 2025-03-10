@@ -5,7 +5,7 @@ iso_dir="isodir"
 grub_dir="$iso_dir/boot/grub"
 
 script_dir=$(dirname "$(readlink -f "$0")")
-bin_dir="$script_dir/../../build/kernel.bin"
+bin_dir="$script_dir/../../kernel.bin"
 isofile="$script_dir/../../isofile"
 
 # 创建必要的目录结构

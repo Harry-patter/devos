@@ -1,52 +1,31 @@
-/*  boot.S - bootstrap the kernel */
-/*  Copyright (C) 1999, 2001, 2010  Free Software Foundation, Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+/* Multiboot header. */
+.equ MULTIBOOT2_HEADER_MAGIC,                 0xe85250d6
+.equ MULTIBOOT_ARCHITECTURE_I386,             0
+.equ MULTIBOOT_HEADER_TAG_FRAMEBUFFER,        5
+.equ MULTIBOOT_HEADER_TAG_OPTIONAL,           1
+.equ MULTIBOOT_HEADER_TAG_END,                0
 
-#define ASM_FILE        1
+/* page types */
+.equ PDE_ATTR_P,     (1 << 0)
+.equ PDE_ATTR_RW,    (1 << 1)
+.equ PDE_ATTR_PS,    (1 << 7)
 
-#include "boot/multiboot2.h"
-#include "boot/asm/page_types.h"
-#include "boot/asm/cpu_types.h"
+/* cpu types */
+.equ CR0_PG,  (1 << 31)
+.equ CR4_PAE, (1 << 5)
+.equ CR4_PGE, (1 << 7)
+.equ SELECTOR_INDEX, (3)
 
-/*  C symbol format. HAVE_ASM_USCORE is defined by configure. */
-#ifdef HAVE_ASM_USCORE
-#define EXT_C(sym)                     _ ## sym
-#else
-#define EXT_C(sym)                     sym
-#endif
+/*  size of stack */
+.equ STACK_SIZE,                      0x4000
 
-/*  The size of our stack (16KB). */
-#define STACK_SIZE                      0x4000
-        
-    .section .text
-    .code32
-    .global _start
-_start:
-    jmp multiboot_entry
-    
-    /*  Align 64 bits boundary. */
+/* multiboot2 header read only section */
+.section .multiboot, "a"    
     .align  8
 multiboot_header:
-    /*  magic */
     .long   MULTIBOOT2_HEADER_MAGIC
-    /*  ISA: i386 */
     .long   MULTIBOOT_ARCHITECTURE_I386
-    /*  Header length. */
     .long   multiboot_header_end - multiboot_header
-    /*  checksum */
     .long   -(MULTIBOOT2_HEADER_MAGIC + MULTIBOOT_ARCHITECTURE_I386 + (multiboot_header_end - multiboot_header))
 framebuffer_tag_start:  
     .align  8 
@@ -64,7 +43,13 @@ end_tag:
     .long 8
 multiboot_header_end:
 
-/* entry */
+/*  Code section. read and exectuable*/
+.section .text,  "ax"
+    .code32
+    .global _start
+_start:
+    jmp multiboot_entry
+
 multiboot_entry:    
     movl    $(stack + STACK_SIZE), %esp
 
@@ -119,22 +104,13 @@ multiboot_entry:
 
 long_mode_entry:
     /*  Now enter the C main function... */
-    call    EXT_C(cmain)
+    call    kernel
 
-    /*  Halt. */
-    push   $halt_message
-    call    EXT_C(printf)
-
-    /*  Halt if cmain returns */
 loop:   
     hlt
     jmp     loop
 
-    .section .data
-halt_message:
-    .asciz  "Halted."
-
-/*  Our stack area. */
+/*  stack area. */
     .comm   stack, STACK_SIZE
 
 /*  Temp tables */
@@ -154,4 +130,5 @@ gdt64:
 gdt64_ptr:
     .short  gdt64_ptr - gdt64 - 1
     .long   gdt64
-    
+
+.section .note.GNU-stack,"",@progbits   /* disable stack protector */

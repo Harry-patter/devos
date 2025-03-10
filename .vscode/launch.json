@@ -8,7 +8,7 @@
             "name": "QEMU Debug",
             "type": "cppdbg",
             "request": "launch", 
-            "program": "${workspaceFolder}/build/kernel.bin",//路径
+            "program": "${workspaceFolder}/build/isodir/boot/myos",//路径
             "args": [],//启动参数,如果需要记录日志可以自己增加参数。因为gdbsever已经有了参数，这里可以不用设置
             "stopAtEntry": false,//会自动停在main,不需要则设置为false
             "cwd": "${workspaceRoot}",

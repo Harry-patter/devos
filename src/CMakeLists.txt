@@ -1,36 +1,54 @@
-# Set the minimum required version of CMake
 cmake_minimum_required(VERSION 3.10)
 
-# Project name
-project(kernel C CXX ASM)
+# 设置项目名称
+project(devos)
 
-# Set standard
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_C_STANDARD 11)
+# 设置 C++ 标准
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Set cross-compiler
-set(CMAKE_C_COMPILER x86_64-elf-gcc)
-set(CMAKE_CXX_COMPILER x86_64-elf-g++)
-set(CMAKE_ASM_COMPILER x86_64-elf-gcc)
-set(CMAKE_LINKER x86_64-elf-ld)
+# 使用 Clang 编译器
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++)
 
-# Set compilation options
-set(CMAKE_C_FLAGS "-g -ffreestanding -Wextra -fno-builtin -fno-stack-protector -nostartfiles -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast")
-set(CMAKE_ASM_FLAGS "-g -ffreestanding -Wextra -fno-builtin -fno-stack-protector -nostartfiles -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast")
+set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Set the linker script
-set(CMAKE_LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/linker.ld")
-set(CMAKE_EXE_LINKER_FLAGS "-nostdlib -T ${CMAKE_LINKER_SCRIPT}")
+# 添加汇编支持
+enable_language(ASM)
+# 添加编译选项
+# 添加链接选项
+add_compile_options(-ffreestanding -nostdlib -fno-pie -nostartfiles -fno-stack-protector -mcmodel=large -fno-asynchronous-unwind-tables -fno-exceptions)
+# 添加链接选项
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-pie -nostartfiles -z noexecstack -T ${CMAKE_SOURCE_DIR}/linker.ld ")
+# 设置链接选项，明确指定栈不可执行
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -z noexecstack")
 
-# Set the source and build directories
-set(SRC_DIR ${CMAKE_SOURCE_DIR})
-set(BUILD_DIR ${CMAKE_SOURCE_DIR}/../build)
-include_directories(${CMAKE_SOURCE_DIR}/../include)
-message(STATUS "src dir: ${SRC_DIR}")
+# 添加源文件
+set(SOURCES
+    boot.S
+    kernel.cpp
+)
 
-# Source files
-file(GLOB SOURCES "${SRC_DIR}/boot/*.S" "${SRC_DIR}/boot/*.c")
-message(STATUS "source files: ${SOURCES}")
+# 添加可执行文件
+add_executable(myos ${SOURCES})
 
-# Add executable file
-add_executable(kernel.bin ${SOURCES})
+# 设置可执行文件的输出路径
+set_target_properties(myos PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/isodir/boot
+)
+
+# 复制镜像目录
+file(COPY ${CMAKE_SOURCE_DIR}/isodir DESTINATION ${CMAKE_BINARY_DIR})
+
+# 定义要创建 ISO 文件的目录和输出的 ISO 文件路径
+set(ISO_DIR "${CMAKE_BINARY_DIR}/isodir")
+set(ISO_FILE "${CMAKE_BINARY_DIR}/kernel.iso")
+# 添加自定义目标
+add_custom_target(create_iso ALL
+    COMMAND grub-mkrescue -o ${ISO_FILE} ${ISO_DIR}
+    COMMENT "Creating ISO image: ${ISO_FILE}"
+)
+
+
+

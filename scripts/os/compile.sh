@@ -1,5 +1,10 @@
 #!/bin/bash
+
 script_dir=$(dirname "$(readlink -f "$0")")
 project_dir="$script_dir/../.."
 
-gdb -x $script_dir/gdb.gdb $project_dir/build/isodir/boot/myos
+mkdir -p "$project_dir/build"
+cd "$project_dir/build"
+cmake -G Ninja ../src
+ninja
+cd ..

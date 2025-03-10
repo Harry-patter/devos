@@ -4,21 +4,24 @@
             "name": "x86_64",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/home/ayumi/cross/lib/gcc/x86_64-elf/14.2.0/include/**"
+                "/home/ayumi/cross/lib/gcc/x86_64-elf/14.2.0/include/**",
+                "${workspaceFolder}/src/**"
             ],
-            "compilerPath": "/home/ayumi/cross/bin/x86_64-elf-gcc-14.2.0",
-            "cStandard": "gnu17",
-            "cppStandard": "gnu++17",
+            "compilerPath": "/home/ayumi/cross/bin/x86_64-elf-gcc",
+            "cStandard": "c23",
+            "cppStandard": "c++23",
             "intelliSenseMode": "linux-gcc-x64",
             "compilerArgs": [
                 "-ffreestanding",
-                "-Wall",
                 "-Wextra",
-                "--sysroot=/home/ayumi/cross"
+                "--sysroot=/home/ayumi/cross",
+                "-fmodules"
             ],
             "browse": {
+                "path": ["${workspaceFolder}/src/**"],
                 "limitSymbolsToIncludedHeaders": true
-            }
+            },
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
         }
     ],
     "version": 4
